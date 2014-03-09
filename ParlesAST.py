@@ -1,6 +1,9 @@
 from ParlesTypes import *
 
-class Quote():
+class Scope():
+	pass
+
+class Quote(Scope):
 	def __init__(self, args, body):
 		self.type = None
 		self.id = ""
@@ -9,8 +12,18 @@ class Quote():
 
 	def __repr__(self):
 		return "["+(' '.join(map(str,self.args))+" -> " if len(self.args) else "")+str(self.body)+"]"
+
+class Paren(Scope):
+	def __init__(self, args, body):
+		self.type = None
+		self.id = ""
+		self.args = args
+		self.body = body
+
+	def __repr__(self):
+		return "("+(' '.join(map(str,self.args))+" -> " if len(self.args) else "")+str(self.body)+")"
 		
-class Block():
+class Block(Scope):
 	def __init__(self, args, body):
 		self.type = None
 		self.id = ""

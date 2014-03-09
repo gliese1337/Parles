@@ -20,7 +20,13 @@ env = TypeEnv().extend({
 def printparse(prog):
 	ast = alphavary(parse(prog))
 	print '\n', ast
-	print typecheck(ast, env)
+	try:
+		print typecheck(ast, env)
+	except Exception as e:
+		print e.message
+
+		
+printparse("""(+ 2)""")
 
 printparse("""
 + 1 2;

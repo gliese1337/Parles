@@ -72,7 +72,7 @@ def parseParen(tokenizer):
 		if type != 'CLOSE_PAREN':
 			raise Exception("Missing closing paren: '"+val+"'")
 	args, body = args_body(tokenizer,checktype)
-	return Block(args,body), safe_next(tokenizer)
+	return Paren(args,body), safe_next(tokenizer)
 
 def parseBlock(tokenizer):
 	def checktype(type):

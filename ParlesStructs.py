@@ -33,7 +33,7 @@ class MState():
 	@property
 	def instr(self):
 		return self.frame.quot.instrs[self.ip]
-		
+	
 	@property
 	def ended(self):
-		return self.ip >= len(self.frame.quot.instrs)	
+		return self.ip >= len(self.frame.quot.instrs)

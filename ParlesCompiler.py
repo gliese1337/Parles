@@ -64,7 +64,7 @@ def _alphavary(node, vtable):
 		left = _alphavary(node.left, vtable)
 		right = _alphavary(node.right, vtable)
 		return Pipe(left, right)#, vtable.addId('pipe'))
-	if isinstance(node, Block) or isinstance(node, Quote):
+	if isinstance(node, Scope):
 		if node.args:
 			vtable = VarTable(vtable)
 			for a in node.args:
@@ -124,11 +124,20 @@ def blocktype(node, tenv):
 	bodytype.input.top.extend(reversed(map(lambda a: a.type, node.args)))
 	return bodytype
 
+def parentype(node, tenv):
+	nenv = tenv.extend({a.val: a.type for a in node.args})
+	bodytype = typecheck(node.body, nenv)
+	if len(bodytype.input.top) > 0:
+		raise Exception("Paren bodies cannot require arguments")
+	bodytype.input.top.extend(reversed(map(lambda a: a.type, node.args)))
+	return bodytype
+
 def _typecheck(node, tenv):
 	if isinstance(node, Literal): return produce(node.type)
 	if isinstance(node, Word): return tenv[node.val]
 	if isinstance(node, Seq): return seqtype(node, tenv)
 	if isinstance(node, Pipe): return pipetype(node, tenv)
+	if isinstance(node, Paren): return parentype(node, tenv)
 	if isinstance(node, Block): return blocktype(node, tenv)
 	if isinstance(node, Quote): return produce(blocktype(node, tenv))
 	raise Exception("Unknown AST Node")
