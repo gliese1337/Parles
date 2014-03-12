@@ -1,27 +1,15 @@
-from ParlesParser import parse
-from ParlesTypes import *
-from ParlesCompiler import alphavary, typecheck, TypeEnv
-from ParlesCompose import compose
-
-env = TypeEnv().extend({
-	'+': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('num')])),
-	'/%': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('num'), AtomType('num')])),
-	'<': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('bool')])),
-	'if': FuncType(	StackType(TypeVar('a'), [	FuncType(StackType(TypeVar('a'),[]),StackType(TypeVar('b'),[])),
-												FuncType(StackType(TypeVar('a'),[]),StackType(TypeVar('b'),[])),
-												AtomType('bool')]),
-					StackType(TypeVar('b'),[])),
-	'print': FuncType(StackType(TypeVar('a'), [AtomType('str')]), StackType(TypeVar('a'),[]))
-})
+from ParlesCompiler import parse, typecheck, simplify, compile
 
 def printparse(prog):
-	ast = alphavary(parse(prog))
-	print '\n', ast
 	try:
-		print typecheck(ast, env)
+		ast = parse(prog)
+		simpl = simplify(ast)
+		print '\n', ast
+		print simpl
+		type, main, quots = compile(prog)
+		print '\n',type
+		print main
+		print quots
 	except Exception as e:
 		print e.message
 

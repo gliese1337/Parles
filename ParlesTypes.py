@@ -27,6 +27,10 @@ def genvar():
 	vcount += 1
 	return TypeVar("#%d"%(vcount,))
 
+def reset():
+	global vcount
+	vcount = 0
+
 def TypeName(val):
 	if val == "any":
 		return genvar()
