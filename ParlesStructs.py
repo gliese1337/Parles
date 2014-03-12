@@ -1,8 +1,38 @@
 from collections import namedtuple
 
 #register file size, environment size, instruction list
-Quotation = namedtuple('Quotation', ['id', 'rsize', 'vsize', 'instrs'])
-Instr = namedtuple('Instr', ['dest', 'op', 'arg1', 'arg2'])
+class Quotation(namedtuple('Quotation', ['id', 'rsize', 'vsize', 'instrs'])):
+	def __repr__(self):
+		id, rsize, vsize, instrs = self
+		return id+'(%d, %d):\n'%(rsize,vsize)+'\n'.join(map(lambda i: str(i), instrs))
+
+def argstr(arg):
+	spec, index = arg
+	if spec == -3:
+		return ""
+	if spec == -2:
+		return '#'+str(index)
+	if spec == -1:
+		return 'r'+str(index)
+	return "["+str(spec)+"]"+str(index)
+	
+class Instr(namedtuple('Instr', ['dest', 'op', 'arg1', 'arg2'])):
+	def __repr__(self):
+		dest, op, arg1, arg2 = self
+		#get destination
+		spec, index = dest
+		if spec == 's':
+			rstr = 's'
+		elif spec == 'r' or spec == 'v':
+			rstr = spec+str(index)
+		else:
+			rstr = 'n'
+		rstr += '\t= '+op
+		astr = argstr(arg1)
+		if astr: rstr += ' '+astr
+		astr = argstr(arg2)
+		if astr: rstr += ' '+astr
+		return rstr
 
 #associated quotation ID, access link (parent environment), list of variables
 class Env():
@@ -10,6 +40,9 @@ class Env():
 		self.qid = quot.id
 		self.parent = parent
 		self.vars = [None]*quot.vsize
+	
+	def __repr__(self):
+		return 'id: %s\t%d\n'%(self.qid,len(self.vars))+(str(self.parent) if self.parent else '')
 
 #quotation & access link (parent environment)
 Closure = namedtuple('Closure', ['quot', 'penv'])

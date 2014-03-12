@@ -2,6 +2,7 @@ from ParlesParser import parse
 from ParlesSimplify import flatten, simplify
 from ParlesCodegen import codegen
 from ParlesTypes import *
+from ParlesStructs import Quotation, Instr
 from ParlesTypeChecker import typecheck, TypeEnv
 
 topenv = TypeEnv().extend({
@@ -22,5 +23,18 @@ def compile(source):
 	ast = parse(source)
 	type = typecheck(ast,topenv)
 	intermediate = flatten(simplify(ast))
-	main, quots = codegen(intermediate)
-	return type, main, quots
+	quots = codegen(intermediate)
+	return type, quots
+
+def link(quots):
+	qlist = [q for k, q in quots.items()]
+	imap = {q.id: i for i, q in enumerate(qlist)}
+	def rewritei(instr):
+		d, op, (m,i), a = instr
+		if op == 'clos':
+			return Instr(d, op, (m,imap[i]), a)
+		return instr
+	def rewriteq(q):
+		id, rsize, vsize, instrs = q
+		return Quotation(id, rsize, vsize, map(rewritei, instrs))
+	return imap['main'], map(rewriteq, qlist)

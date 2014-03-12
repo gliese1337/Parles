@@ -1,7 +1,7 @@
 from ParlesStructs import *
 
 #Compiled program:
-#	list of quotation objects
+#	list of quotation objects and entry point
 
 U, C, R = -3, -2, -1	
 def getv(var, rec):
@@ -15,8 +15,10 @@ def getv(var, rec):
 	#variable
 	env = rec.env
 	while t > 0:
+		#print env
 		env = env.parent
 		t = t - 1
+	#print env
 	return env.vars[n]
 
 def iter_stack(stack):
@@ -24,20 +26,25 @@ def iter_stack(stack):
 		a, stack = stack
 		yield a
 
-def run(prog):
+def run(entry, qlist):
 	from ParlesBuiltins import optable
-	quot = prog[0]
-	#this is a bad hack that turns *everything* into a globally-scoped closure
+	#set up the global environment
 	genv = Env(Quotation('global',0,0,[]),None)
-	genv.vars = map(lambda q: Closure(q,genv), prog)
-	state = MState(ARecord(quot,genv,None,0),0,None)
+	genv.vars = qlist
+	#start up the main function
+	main = qlist[entry]
+	state = MState(ARecord(main,genv,None,0),0,None)
 	while state.frame is not None:
 		
 		#decode
 		((dtype, n), op, a1, a2) = state.instr
+		#print dtype, n, op, a1, a2
+		v1 = getv(a1, state.frame)
+		v2 = getv(a2, state.frame)
+		#print '\t', dtype, n, op, v1 if v1 else '', v2 if v2 else ''
 		
 		#execute
-		state, output = optable[op](state, getv(a1, state.frame), getv(a2, state.frame))
+		state, output = optable[op](state, v1, v2)
 		state.ip += 1
 		
 		#store
