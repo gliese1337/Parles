@@ -157,7 +157,7 @@ def codegen(main):
 	global qid
 	qid = 0
 	#TODO: linker needs to replace ids with indices for 'clos' opcodes
-	lsize, csize, symtable = gensymtable(main, 0, SymTable())
+	lsize, csize, symtable = gensymtable(main, 1, SymTable())
 	code, qtable = _codegen(main.body, 1, symtable)
 	main = Quotation('main', lsize+2, csize, code)
 	qtable['main'] = main

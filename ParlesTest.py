@@ -2,21 +2,21 @@ from ParlesCompiler import parse, typecheck, simplify, compile, link
 from ParlesVM import run
 
 def printparse(prog):
-	#try:
+	try:
 		ast = parse(prog)
 		print '\n', ast
 		type, quots = compile(prog)
 		print '\n', type
 		entry, prog = link(quots)
-		for q in prog:
-			print q,'\n'
+		#for q in prog:
+		#	print q,'\n'
 		print "Running:"
 		print run(entry, prog)
-	#except Exception as e:
-		#print e.message
+	except Exception as e:
+		print e.message
 
 		
-#printparse("""(+ 2)""")
+printparse("""(+ 2)""")
 
 printparse("""
 + 1 2;
