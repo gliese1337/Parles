@@ -4,7 +4,7 @@ from collections import namedtuple
 class Quotation(namedtuple('Quotation', ['id', 'rsize', 'vsize', 'instrs', 'dskip'])):
 	def __repr__(self):
 		id, rsize, vsize, instrs, dskip = self
-		return id+'(%d, %d):\n'%(rsize,vsize,dskip)+'\n'.join(map(lambda i: str(i), instrs))
+		return id+'(%d, %d, %d):\n'%(rsize,vsize,dskip)+'\n'.join(map(lambda i: str(i), instrs))
 
 def argstr(arg):
 	spec, index = arg
@@ -49,18 +49,9 @@ Closure = namedtuple('Closure', ['quot', 'penv'])
 
 #environment, register file, quotation, return record, return IP
 class ARecord():
-	def __init__(self,quot,penv,prec,pip):	
-		"""
-		ds = quot.dskip - 1
-		if ds == -1:
-			env = Env(quot,penv)
-		else:
-			env = penv
-			while ds > 0:
-				env = env.parent
-				ds -= 1
-		"""
-		self.env = Env(quot,penv)
+	def __init__(self,quot,penv,prec,pip):
+		env = penv if quot.vsize == 0 else Env(quot,penv)
+		self.env = env
 		self.rfile = [None]*quot.rsize
 		self.quot = quot
 		self.r_rec = prec

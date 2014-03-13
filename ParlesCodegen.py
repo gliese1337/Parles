@@ -121,8 +121,8 @@ def genqid():
 	qid += 1
 	return "q%d"%(qid,)
 
-def display_skip(instrs):
-	min = float("inf")
+def display_skip(instrs, max):
+	min = max
 	for i in instrs:
 		_, _, (d1, _), (d2, _) = i
 		if d1 >= 0 and d1 < min:
@@ -134,7 +134,7 @@ def display_skip(instrs):
 def display_sub(instrs, skip):
 	def repack(i):
 		dest, op, (d1, v1), (d2, v2) = i
-		return Instr(dest, op, (d1-skip, v1), (d2-skip, v2))
+		return Instr(dest, op, (d1-skip if d1 > 0 else d1, v1), (d2-skip if d2 > 0 else d2, v2))
 	return map(repack, instrs)
 
 def gennode(node, level, symtable):
@@ -165,17 +165,29 @@ def gennode(node, level, symtable):
 		#generate a new quotation
 		id = genqid()
 		lsize, csize, nsymtable = gensymtable(node, level, symtable)
-		instrs, lowerqs = _codegen(body, level+1, nsymtable)
+		if csize == 0:
+			skiplevel = level - 1
+			instrs, lowerqs = _codegen(body, level, nsymtable)
+			ds = display_skip(instrs, level+1)
+			if ds > level:
+				ds = -1
+			elif ds > 0:
+				#instrs = display_sub(instrs, ds)
+				pass
+		else:
+			skiplevel = level
+			instrs, lowerqs = _codegen(body, level+1, nsymtable)
+		
+		lowerqs[id] = Quotation(id, lsize+2, csize, instrs, ds)
+		return [Instr(('s',0), 'clos', (skiplevel,id),(-3,0))], lowerqs
 		"""
 		if csize == 0:
-			ds = display_skip(instrs)
+			ds = display_skip(instrs, level+1)
 			if ds > 0:
 				instrs = display_sub(instrs, ds)
 		else:
 			ds = 0
 		"""
-		lowerqs[id] = Quotation(id, lsize+2, csize, instrs, 0)
-		return [Instr(('s',0), 'clos', (level,id),(-3,0))], lowerqs
 	else:
 		print "node:", node
 		raise Exception("Unknown node type")
