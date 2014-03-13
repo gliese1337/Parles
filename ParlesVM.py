@@ -29,7 +29,7 @@ def iter_stack(stack):
 def run(entry, qlist):
 	from ParlesBuiltins import optable
 	#set up the global environment
-	genv = Env(Quotation('global',0,0,[]),None)
+	genv = Env(Quotation('global',0,0,[],0),None)
 	genv.vars = qlist
 	#start up the main function
 	main = qlist[entry]

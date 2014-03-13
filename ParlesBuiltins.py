@@ -7,8 +7,8 @@ def call(state, a, b):
 	state.ip = -1
 	return state, None
 
-def clos(state, a, b):
-	return state, Closure(a,state.frame.env)
+def clos(state, quot, b):
+	return state, Closure(quot,state.frame.env)
 	
 def pop(state, a, b):
 	v, state.stack = state.stack

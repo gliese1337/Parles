@@ -1,10 +1,10 @@
 from collections import namedtuple
 
 #register file size, environment size, instruction list
-class Quotation(namedtuple('Quotation', ['id', 'rsize', 'vsize', 'instrs'])):
+class Quotation(namedtuple('Quotation', ['id', 'rsize', 'vsize', 'instrs', 'dskip'])):
 	def __repr__(self):
-		id, rsize, vsize, instrs = self
-		return id+'(%d, %d):\n'%(rsize,vsize)+'\n'.join(map(lambda i: str(i), instrs))
+		id, rsize, vsize, instrs, dskip = self
+		return id+'(%d, %d):\n'%(rsize,vsize,dskip)+'\n'.join(map(lambda i: str(i), instrs))
 
 def argstr(arg):
 	spec, index = arg
@@ -49,7 +49,17 @@ Closure = namedtuple('Closure', ['quot', 'penv'])
 
 #environment, register file, quotation, return record, return IP
 class ARecord():
-	def __init__(self,quot,penv,prec,pip):
+	def __init__(self,quot,penv,prec,pip):	
+		"""
+		ds = quot.dskip - 1
+		if ds == -1:
+			env = Env(quot,penv)
+		else:
+			env = penv
+			while ds > 0:
+				env = env.parent
+				ds -= 1
+		"""
 		self.env = Env(quot,penv)
 		self.rfile = [None]*quot.rsize
 		self.quot = quot

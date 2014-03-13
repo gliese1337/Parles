@@ -121,6 +121,22 @@ def genqid():
 	qid += 1
 	return "q%d"%(qid,)
 
+def display_skip(instrs):
+	min = float("inf")
+	for i in instrs:
+		_, _, (d1, _), (d2, _) = i
+		if d1 >= 0 and d1 < min:
+			min = d1
+		if d2 >= 0 and d2 < min:
+			min = d2
+	return min
+
+def display_sub(instrs, skip):
+	def repack(i):
+		dest, op, (d1, v1), (d2, v2) = i
+		return Instr(dest, op, (d1-skip, v1), (d2-skip, v2))
+	return map(repack, instrs)
+
 def gennode(node, level, symtable):
 	if isinstance(node, Literal): #push value
 		return [Instr(('s',0), 'mov', (-2, node.val), (-3,0))],{}
@@ -135,10 +151,30 @@ def gennode(node, level, symtable):
 		mode = 'v' if record.captured else 'r' #move to the captured variable display or registers
 		return [Instr((mode,record.index), 'pop', (-3,0), (-3,0))],{}
 	elif isinstance(node, Func):
+		bound, _, body = node
+		if len(bound) == 0:
+			if len(body) == 0:
+				#TODO: push the no-op function
+				pass
+			elif len(body) == 1 and isinstance(body[0], Word):
+				#unwrap a quoted function
+				record = symtable[body[0].val]
+				if isinstance(record.type, FuncType): #push a function
+					mode = -1 if record.level == level else level - record.level
+					return [Instr(('s',0), 'mov', (mode,record.index), (-3,0))]
+		#generate a new quotation
 		id = genqid()
 		lsize, csize, nsymtable = gensymtable(node, level, symtable)
-		instrs, lowerqs = _codegen(node.body, level+1, nsymtable)
-		lowerqs[id] = Quotation(id, lsize+2, csize, instrs)
+		instrs, lowerqs = _codegen(body, level+1, nsymtable)
+		"""
+		if csize == 0:
+			ds = display_skip(instrs)
+			if ds > 0:
+				instrs = display_sub(instrs, ds)
+		else:
+			ds = 0
+		"""
+		lowerqs[id] = Quotation(id, lsize+2, csize, instrs, 0)
 		return [Instr(('s',0), 'clos', (level,id),(-3,0))], lowerqs
 	else:
 		print "node:", node
@@ -159,6 +195,6 @@ def codegen(main):
 	#TODO: linker needs to replace ids with indices for 'clos' opcodes
 	lsize, csize, symtable = gensymtable(main, 1, SymTable())
 	code, qtable = _codegen(main.body, 1, symtable)
-	main = Quotation('main', lsize+2, csize, code)
+	main = Quotation('main', lsize+2, csize, code, 0)
 	qtable['main'] = main
 	return qtable

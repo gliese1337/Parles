@@ -35,6 +35,6 @@ def link(quots):
 			return Instr(d, op, (m,imap[i]), a)
 		return instr
 	def rewriteq(q):
-		id, rsize, vsize, instrs = q
-		return Quotation(id, rsize, vsize, map(rewritei, instrs))
+		id, rsize, vsize, instrs, ds = q
+		return Quotation(id, rsize, vsize, map(rewritei, instrs), ds)
 	return imap['main'], map(rewriteq, qlist)
