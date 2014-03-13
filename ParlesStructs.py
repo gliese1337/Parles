@@ -50,8 +50,8 @@ Closure = namedtuple('Closure', ['quot', 'penv'])
 #environment, register file, quotation, return record, return IP
 class ARecord():
 	def __init__(self,quot,penv,prec,pip):
-		env = penv if quot.vsize == 0 else Env(quot,penv)
-		self.env = env
+		#insert an extra display link if this quotation creates captured variables
+		self.env = penv if quot.vsize == 0 else Env(quot,penv)
 		self.rfile = [None]*quot.rsize
 		self.quot = quot
 		self.r_rec = prec

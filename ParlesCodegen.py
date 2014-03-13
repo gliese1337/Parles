@@ -56,7 +56,7 @@ def genword(val, level, symtable):
 	global optable
 	if val in symtable:
 		record = symtable[val] 
-		mode = -1 if record.level == level else level - record.level
+		mode = level - record.level if record.captured else -1
 		if isinstance(record.type, FuncType): #call function
 			return [Instr(('n',0), 'call', (mode,record.index), (-3,0))]
 		else: #push value
@@ -121,28 +121,32 @@ def genqid():
 	qid += 1
 	return "q%d"%(qid,)
 
-def display_skip(instrs, max):
-	min = max
-	for i in instrs:
-		_, _, (d1, _), (d2, _) = i
-		if d1 >= 0 and d1 < min:
-			min = d1
-		if d2 >= 0 and d2 < min:
-			min = d2
-	return min
-
-def display_sub(instrs, skip):
-	def repack(i):
-		dest, op, (d1, v1), (d2, v2) = i
-		return Instr(dest, op, (d1-skip if d1 > 0 else d1, v1), (d2-skip if d2 > 0 else d2, v2))
-	return map(repack, instrs)
+def genquot(node, level, symtable):
+	_, used, body = node
+	
+	#find the deepest higher scope level from which we are capturing variables
+	#our variables will occupy the next lowest level
+	highvars = {v for v in used if v in symtable}
+	accesslevel = max(symtable[v].level for v in highvars) if len(highvars) > 0 else 0
+	varlevel = accesslevel + 1
+	
+	#generate new symtable and get local allocation sizes
+	lsize, csize, nsymtable = gensymtable(node, varlevel, symtable)
+	#eliminate vacuous display levels
+	nlevel = accesslevel if csize == 0 else varlevel
+	skip = level-accesslevel
+	
+	id = genqid()
+	instrs, lowerqs = _codegen(body, nlevel+1, nsymtable)
+	lowerqs[id] = Quotation(id, lsize+2, csize, instrs, skip)
+	return [Instr(('s',0), 'clos', (nlevel,id),(-3,0))], lowerqs
 
 def gennode(node, level, symtable):
 	if isinstance(node, Literal): #push value
 		return [Instr(('s',0), 'mov', (-2, node.val), (-3,0))],{}
-	elif isinstance(node, Word):
+	if isinstance(node, Word):
 		return genword(node.val, level, symtable),{}
-	elif isinstance(node, Pop):
+	if isinstance(node, Pop):
 		#since mutation is not implemented, we don't need to check the level
 		#this is guaranteed to always be local
 		if node.val not in symtable: #unused variable == drop
@@ -150,44 +154,25 @@ def gennode(node, level, symtable):
 		record = symtable[node.val]
 		mode = 'v' if record.captured else 'r' #move to the captured variable display or registers
 		return [Instr((mode,record.index), 'pop', (-3,0), (-3,0))],{}
-	elif isinstance(node, Func):
-		bound, _, body = node
+	if isinstance(node, Func):
+		bound, used, body = node
+		
+		#check special cases- re-use known quotations
 		if len(bound) == 0:
 			if len(body) == 0:
 				#TODO: push the no-op function
 				pass
-			elif len(body) == 1 and isinstance(body[0], Word):
-				#unwrap a quoted function
-				record = symtable[body[0].val]
-				if isinstance(record.type, FuncType): #push a function
-					mode = -1 if record.level == level else level - record.level
-					return [Instr(('s',0), 'mov', (mode,record.index), (-3,0))]
-		#generate a new quotation
-		id = genqid()
-		lsize, csize, nsymtable = gensymtable(node, level, symtable)
-		if csize == 0:
-			skiplevel = level - 1
-			instrs, lowerqs = _codegen(body, level, nsymtable)
-			ds = display_skip(instrs, level+1)
-			if ds > level:
-				ds = -1
-			elif ds > 0:
-				#instrs = display_sub(instrs, ds)
-				pass
-		else:
-			skiplevel = level
-			instrs, lowerqs = _codegen(body, level+1, nsymtable)
+			elif len(body) == 1:
+				#check is we need to unwrap and push a quoted function
+				bnode = body[0]
+				if isinstance(bnode, Word):
+					record = symtable[bnode.val]
+					if isinstance(record.type, FuncType):
+						mode = level - record.level if record.captured else -1
+						return [Instr(('s',0), 'mov', (mode,record.index), (-3,0))],{}
 		
-		lowerqs[id] = Quotation(id, lsize+2, csize, instrs, ds)
-		return [Instr(('s',0), 'clos', (skiplevel,id),(-3,0))], lowerqs
-		"""
-		if csize == 0:
-			ds = display_skip(instrs, level+1)
-			if ds > 0:
-				instrs = display_sub(instrs, ds)
-		else:
-			ds = 0
-		"""
+		#generate a new quotation
+		return genquot(node, level, symtable)
 	else:
 		print "node:", node
 		raise Exception("Unknown node type")

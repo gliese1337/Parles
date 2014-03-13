@@ -8,7 +8,13 @@ def call(state, a, b):
 	return state, None
 
 def clos(state, quot, b):
-	return state, Closure(quot,state.frame.env)
+	#compute the access link
+	skip = quot.dskip
+	env = state.frame.env
+	while skip > 0:
+		env = env.parent
+		skip -= 1
+	return state, Closure(quot,env)
 	
 def pop(state, a, b):
 	v, state.stack = state.stack
