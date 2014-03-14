@@ -1,35 +1,10 @@
 from ParlesParser import parse
 from ParlesSimplify import flatten, simplify
 from ParlesCodegen import codegen
-from ParlesTypes import *
-from ParlesStructs import Quotation, Instr
+from ParlesBuiltins import typetable
 from ParlesTypeChecker import typecheck, TypeEnv
 
-topenv = TypeEnv().extend({
-	'+': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('num')])),
-	'-': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('num')])),
-	'*': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('num')])),
-	'/': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('num')])),
-	'/%': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('num'), AtomType('num')])),
-	'<': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('bool')])),
-	'>': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('bool')])),
-	'=': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
-					StackType(TypeVar('a'), [AtomType('bool')])),
-	'not': FuncType(StackType(TypeVar('a'), [AtomType('bool')]),
-					StackType(TypeVar('a'), [AtomType('bool')])),
-	'if': FuncType(	StackType(TypeVar('a'), [	FuncType(StackType(TypeVar('a'),[]),StackType(TypeVar('b'),[])),
-												FuncType(StackType(TypeVar('a'),[]),StackType(TypeVar('b'),[])),
-												AtomType('bool')]),
-					StackType(TypeVar('b'),[])),
-	'print': FuncType(StackType(TypeVar('a'), [AtomType('str')]), StackType(TypeVar('a'),[]))
-})
+topenv = TypeEnv().extend(typetable)
 
 def compile(source):
 	ast = parse(source)
@@ -39,6 +14,7 @@ def compile(source):
 	return type, quots
 
 def link(quots):
+	from ParlesStructs import Quotation, Instr
 	qlist = [q for k, q in quots.items()]
 	imap = {q.id: i for i, q in enumerate(qlist)}
 	def rewritei(instr):

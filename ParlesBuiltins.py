@@ -1,58 +1,50 @@
-from ParlesStructs import *
-
-def call(state, a, b):
-	quot, penv = a
-	frame = ARecord(quot,penv,state.frame,state.ip)
-	state.frame = frame
-	state.ip = -1
-	return state, None
-
-def clos(state, quot, b):
-	#compute the access link
-	skip = quot.dskip
-	env = state.frame.env
-	while skip > 0:
-		env = env.parent
-		skip -= 1
-	return state, Closure(quot,env)
+from ParlesTypes import *
+from ParlesStructs import Instr
 	
-def pop(state, a, b):
-	v, state.stack = state.stack
-	return state, v
-	
-def _print(state, a, b):
-	print a
-	return state, None
-	
-def jz(state, a, b):
-	if a == 0:
-		state.ip += b
-	return state, None
-	
-def jmp(state, a, b):
-	state.ip += a
-	return state, None
-	
-def dmod(state, a, b):
-	c, d = divmod(a, b)
-	state.stack = (c, (d, state.stack))
-	return state, None
-
 optable = {
-	'mov': lambda s, a, b: (s, a),
-	'add': lambda s, a, b: (s, a + b),
-	'sub': lambda s, a, b: (s, a - b),
-	'mul': lambda s, a, b: (s, a * b),
-	'div': lambda s, a, b: (s, a / b),
-	'lt': lambda s, a, b: (s, 1 if a < b else 0),
-	'gt': lambda s, a, b: (s, 1 if a > b else 0),
-	'eq': lambda s, a, b: (s, 1 if a == b else 0),
-	'not': lambda s, a, b: (s, 1 if not a else 0),
-	'dmod': dmod,
-	'jz': jz,
-	'jmp': jmp,
-	'clos': clos,
-	'print': _print,
-	'call': call,
-	'pop': pop
+	'+': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'add', (-1,0), (-1,1))],
+	'-': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'sub', (-1,0), (-1,1))],
+	'*': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'mul', (-1,0), (-1,1))],
+	'/': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'div', (-1,0), (-1,1))],
+	'<': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'lt', (-1,0), (-1,1))],
+	'>': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'gt', (-1,0), (-1,1))],
+	'=': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'eq', (-1,0), (-1,1))],
+	'not': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'not', (-1,0), (-3,0))],
+	'/%': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('n',0), 'dmod', (-1,0), (-1,1))],
+	'if': [	Instr(('r',0), 'pop', (-3,0), (-3,0)),	#retrieve the boolean
+			Instr(('r',1), 'pop', (-3,0), (-3,0)),	#retrieve the "if" closure
+			Instr(('n',0), 'jz', (-1,0), (-2,3)),	#check the boolean, skipping to the "else" block if neecessary
+			Instr(('n',0), 'pop', (-3,0), (-3,0)),	#discard the "else" closure"
+			Instr(('n',0), 'call', (-1,1), (-3,0)),	#call the "if" closure"
+			Instr(('n',0), 'jmp', (-2,2), (-3,0)),	#jump past "else" block
+			Instr(('r',1), 'pop', (-3,0), (-3,0)),	#retrieve the "else" closure
+			Instr(('n',0), 'call', (-1,1), (-3,0))	#call the "else" closure
+		],
+	'print': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('n',0), 'print', (-1,0), (-3,0))]
+}
+
+typetable = {
+	'+': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('num')])),
+	'-': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('num')])),
+	'*': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('num')])),
+	'/': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('num')])),
+	'/%': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('num'), AtomType('num')])),
+	'<': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('bool')])),
+	'>': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('bool')])),
+	'=': FuncType(	StackType(TypeVar('a'), [AtomType('num'), AtomType('num')]),
+					StackType(TypeVar('a'), [AtomType('bool')])),
+	'not': FuncType(StackType(TypeVar('a'), [AtomType('bool')]),
+					StackType(TypeVar('a'), [AtomType('bool')])),
+	'if': FuncType(	StackType(TypeVar('a'), [	FuncType(StackType(TypeVar('a'),[]),StackType(TypeVar('b'),[])),
+												FuncType(StackType(TypeVar('a'),[]),StackType(TypeVar('b'),[])),
+												AtomType('bool')]),
+					StackType(TypeVar('b'),[])),
+	'print': FuncType(StackType(TypeVar('a'), [AtomType('str')]), StackType(TypeVar('a'),[]))
 }

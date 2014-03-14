@@ -1,5 +1,3 @@
-from ParlesStructs import *
-
 #Compiled program:
 #	list of quotation objects and entry point
 
@@ -27,7 +25,8 @@ def iter_stack(stack):
 		yield a
 
 def run(entry, qlist):
-	from ParlesBuiltins import optable
+	from ParlesStructs import *
+	from ParlesVMInstructions import optable
 	#set up the global environment
 	genv = Env(Quotation('global',0,0,[],0),None)
 	genv.vars = qlist

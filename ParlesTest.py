@@ -56,7 +56,8 @@ if < 1 2
 	[print "false"]
 """)
 
-printparse("""{x : num y : num -> / + x y 2} 6 10""")
+printparse("""{x : num y : num -> / {x |{+ y}} 2} 6 10""")
+printparse("""{x : num y : num -> / {x |+ y} 2} 6 10""")
 
 #printparse("""
 """\\average : (num num -> num) [x : num y : num -> / + x y 2];
