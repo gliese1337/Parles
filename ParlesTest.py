@@ -55,3 +55,13 @@ if < 1 2
 	[print "true"]
 	[print "false"]
 """)
+
+printparse("""{x : num y : num -> / + x y 2} 6 10""")
+
+#printparse("""
+"""\\average : (num num -> num) [x : num y : num -> / + x y 2];
+if < 1 2
+	[print "true"]
+	[print "false"];
+average 6 10
+"""

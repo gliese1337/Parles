@@ -38,7 +38,13 @@ class SymTable():
 
 optable = {
 	'+': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'add', (-1,0), (-1,1))],
+	'-': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'sub', (-1,0), (-1,1))],
+	'*': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'mul', (-1,0), (-1,1))],
+	'/': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'div', (-1,0), (-1,1))],
 	'<': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'lt', (-1,0), (-1,1))],
+	'>': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'gt', (-1,0), (-1,1))],
+	'=': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'eq', (-1,0), (-1,1))],
+	'not': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'not', (-1,0), (-3,0))],
 	'/%': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('r',1), 'pop', (-3,0), (-3,0)),Instr(('n',0), 'dmod', (-1,0), (-1,1))],
 	'if': [	Instr(('r',0), 'pop', (-3,0), (-3,0)),	#retrieve the boolean
 			Instr(('r',1), 'pop', (-3,0), (-3,0)),	#retrieve the "if" closure
@@ -76,7 +82,9 @@ def capanalysis(fn):
 
 def lifeanalysis(nlist,locals):
 	lset = {a.val for a in locals}
-	ltable = {v:(float("inf"),0) for v in lset}
+	#calculate usage ranges
+	max = len(nlist)
+	ltable = {v:(max,0) for v in lset}
 	for i,node in enumerate(nlist):
 		if (isinstance(node, Word) or isinstance(node, Pop)) and node.val in lset:
 			val = node.val
@@ -84,15 +92,13 @@ def lifeanalysis(nlist,locals):
 			if i < min:	min = i
 			if i > max: max = i
 			ltable[val] = (min,max)
+	#calculate equivalence sets from non-overlapping ranges
 	eqlist = []
 	while len(lset) > 0:
 		var = lset.pop()
 		min, max = ltable[var]
-		eqset = set([var])
-		for v in lset:
-			amin, amax = ltable[v]
-			if amin < min or amax > max:
-				eqset.add(v)
+		isdisjoint = lambda amin, amax: amax < min or amin > max
+		eqset = {v for v in lset if isdisjoint(*ltable[v])}|set([var])
 		lset -= eqset
 		eqlist.append(eqset)
 	return eqlist
@@ -101,6 +107,7 @@ def gensymtable(quot, level, symtable):
 	bound, _, body = quot
 	#variable capture analysis
 	locals, captured = capanalysis(quot)
+	
 	#local variable lifetime analysis and get sets of non-overlapping variables
 	eqlist = lifeanalysis(body,locals)
 	
@@ -112,8 +119,7 @@ def gensymtable(quot, level, symtable):
 	for i,eqset in enumerate(eqlist):
 		ni = i+2
 		for v in eqset: vtable[v] = VarRecord(level, types[v], False, index=ni)
-	
-	return len(locals), len(captured), symtable.extend(vtable)
+	return len(eqlist), len(captured), symtable.extend(vtable)
 
 qid = 0
 def genqid():

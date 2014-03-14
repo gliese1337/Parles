@@ -39,9 +39,15 @@ def dmod(state, a, b):
 	return state, None
 
 optable = {
-	'add': lambda s, a, b: (s, a + b),
 	'mov': lambda s, a, b: (s, a),
+	'add': lambda s, a, b: (s, a + b),
+	'sub': lambda s, a, b: (s, a - b),
+	'mul': lambda s, a, b: (s, a * b),
+	'div': lambda s, a, b: (s, a / b),
 	'lt': lambda s, a, b: (s, 1 if a < b else 0),
+	'gt': lambda s, a, b: (s, 1 if a > b else 0),
+	'eq': lambda s, a, b: (s, 1 if a == b else 0),
+	'not': lambda s, a, b: (s, 1 if not a else 0),
 	'dmod': dmod,
 	'jz': jz,
 	'jmp': jmp,
