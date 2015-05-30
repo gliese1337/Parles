@@ -4,19 +4,14 @@
 U, C, R = -3, -2, -1	
 def getv(var, rec):
 	t, n = var
-	if t == U: #unused argument
-		return None
-	if t == C: #constant
-		return n
-	if t == R: #register
-		return rec.rfile[n]
-	#variable
+	if t == U: return None         #unused argument
+	if t == C: return n            #constant
+	if t == R: return rec.rfile[n] #register variable
+	
+	#display variable
 	env = rec.env
-	while t > 0:
-		#print env
+	for _ in xrange(t,0,-1):
 		env = env.parent
-		t = t - 1
-	#print env
 	return env.vars[n]
 
 def iter_stack(stack):

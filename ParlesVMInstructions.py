@@ -9,11 +9,9 @@ def call(state, a, b):
 
 def clos(state, quot, b):
 	#compute the access link
-	skip = quot.dskip
 	env = state.frame.env
-	while skip > 0:
+	for _ in xrange(quot.dskip,0,-1):
 		env = env.parent
-		skip -= 1
 	return state, Closure(quot,env)
 	
 def pop(state, a, b):
@@ -44,6 +42,7 @@ optable = {
 	'sub': lambda s, a, b: (s, a - b),
 	'mul': lambda s, a, b: (s, a * b),
 	'div': lambda s, a, b: (s, a / b),
+	'mod': lambda s, a, b: (s, a % b),
 	'lt': lambda s, a, b: (s, 1 if a < b else 0),
 	'gt': lambda s, a, b: (s, 1 if a > b else 0),
 	'eq': lambda s, a, b: (s, 1 if a == b else 0),

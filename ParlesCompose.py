@@ -8,10 +8,8 @@ def genstackc(p, q):
 		plen, qlen = qlen, plen
 		p, q = q, p
 	extra = qlen - plen
-	if extra:
-		loc = [(StackType(p.row,[]), StackType(q.row, qtop[:extra]))]
-	else:
-		loc = [(StackType(p.row,[]), StackType(q.row, []))]			   
+	etop = qtop[:extra] if extra else []
+	loc = [(StackType(p.row,[]), StackType(q.row, etop))]			   
 	for np, nq in zip(ptop, qtop[extra:]):
 		loc.extend(genc(np, nq))
 	return loc

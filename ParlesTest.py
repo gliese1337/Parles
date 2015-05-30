@@ -57,6 +57,7 @@ if < 1 2
 """)
 
 printparse("""{x : num y : num -> / {x |{+ y}} 2} 6 10""")
+printparse("""{x : num y : num -> / {x ;+ y} 2} 6 10""")
 printparse("""{x : num y : num -> / {x |+ y} 2} 6 10""")
 
 #printparse("""

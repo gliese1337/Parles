@@ -1,0 +1,113 @@
+Compiled program:
+	map of proc IDs to quotation objects
+
+Quotation:
+	# of registers
+	# of downvars
+	List of instructions
+
+Closure:
+	Proc ID
+	Access link
+
+Activation Record:
+	Access link to downvar Environment
+	Register file
+	Quotation
+	Return Record
+	Return Instruction Pointer
+
+Environment:
+	Access link
+	Array of variables
+
+Machine State:
+	Activation Record
+	Instruction Pointer
+	Stack Pointer
+	
+
+To Compile A Quotation:
+	Uniquify variables
+	Label upvars with their depth
+	Separate herevars and downvars
+	set rp = 0
+	for word in body:
+		if word is primitive c:
+			emit "push c"
+		elif word is quotation q:
+			qlabel = compile(q)
+			//"close" makes a closure by associating qlabel with an access link
+			emit "push close qlabel" 
+		elif word is var x:Value:
+			emit "push %x"
+		elif word is \x:
+			emit "%x = pop"
+		elif word is operator op:
+			emit op(rp)
+			rp += op_inc
+		elif word is var x:Quote:
+			emit call x
+	
+	Merge herevars into registers
+	
+	replace:
+		push {x}
+		y = pop
+	with:
+		y = {x}
+	
+	replace:
+		x = pop
+		{. = .}*
+		push x
+	with:
+		x = top
+	
+	for all unused registers & x:
+		replace "x = pop" with "pop"
+		replace "x = {y}" with _
+	
+	replace:
+		call {x}
+		END
+	and:
+		call {x}
+		jmp END
+	with:
+		tail {x}
+
+inc when: 2
+compile when(rp):
+	endlabel = genlabel()
+    emit $rp = pop //bool
+	emit $rp+1 = pop //if
+	emit "jz $rp, endlabel"
+	emit "call $rp+1"
+	emit "endlabel:"
+	
+inc if: 3
+compile if(rp):
+	elselabel = genlabel()
+	endlabel = genlabel()
+    emit $rp = pop //bool
+	emit $rp+1 = pop //if
+	emit $rp+2 = pop //else
+	emit "jz $rp, elselabel"
+	emit "call $rp+1"
+	emit "jmp endlabel"
+	emit "elselabel:"
+	emit "call $rp+2"
+	emit "endlabel:"
+
+inc +: 2
+compile +(rp):
+    emit $rp = pop
+	emit $rp+1 = pop
+	emit push add $rp, $rp+1
+
+inc divmod: 2
+compile divmod(rp):
+	emit $rp = pop
+	emit $rp+1 = pop
+	emit divmod $rp, $rp+1
