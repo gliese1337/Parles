@@ -126,6 +126,33 @@ def gensymtable(quot, level, symtable):
 
 	return len(eqlist), len(captured), symtable.extend(vtable)
 
+def optimize(instrs):
+	before, after = float("inf"), len(instrs)
+	while before > after:
+		before = after
+		last = instrs
+		instrs, skip = [], set()
+		for i, instr in enumerate(last):
+			if i in skip: continue
+			written = False
+			((spec,_), op, a1, a2) = instr
+			if op == 'mov' and spec == 's':
+				overwrites = set()
+				for j, (dest, op2, _, _) in enumerate(last[i+1:], start=i+1):
+					if op2 == 'mov':
+						overwrites.add(dest)
+						if dest[0] == 's': break
+					elif op2 == 'pop':
+						if dest not in overwrites:
+							skip.add(j)
+							instrs.append(Instr(dest, 'mov', a1, a2))
+							written = True
+						break
+			if not written:
+				instrs.append(instr)
+		after = len(instrs)
+	return instrs
+
 qid = 0
 def genqid():
 	global qid
@@ -149,6 +176,7 @@ def genquot(node, level, symtable):
 
 	id = genqid()
 	instrs, lowerqs = _codegen(body, nlevel+1, nsymtable)
+	instrs = optimize(instrs)
 	lowerqs[id] = Quotation(id, lsize+2, csize, instrs, skip)
 	return [Instr(('s',0), 'clos', (nlevel,id),(-3,0))], lowerqs
 
@@ -200,7 +228,6 @@ def _codegen(nlist, level, symtable):
 def codegen(main):
 	global qid
 	qid = 0
-	#TODO: linker needs to replace ids with indices for 'clos' opcodes
 	lsize, csize, symtable = gensymtable(main, 1, SymTable())
 	code, qtable = _codegen(main.body, 1, symtable)
 	main = Quotation('main', lsize+2, csize, code, 0)

@@ -27,7 +27,7 @@ class Instr(namedtuple('Instr', ['dest', 'op', 'arg1', 'arg2'])):
 			rstr = spec+str(index)
 		else:
 			rstr = 'n'
-		rstr += '\t= '+op
+		rstr += ' = '+op
 		astr = argstr(arg1)
 		if astr: rstr += ' '+astr
 		astr = argstr(arg2)

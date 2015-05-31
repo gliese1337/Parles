@@ -4,25 +4,25 @@ from ParlesVM import run
 def printparse(prog):
 	prog = prog.strip()
 	try:
-		print "Original:\n", prog
-		ast = parse(prog)
+		print "Program:\n\n", prog
+		#ast = parse(prog)
 		#print "AST:\t\t", ast
-		ast = simplify(ast)
-		print "\nSimplified:\n", ast
+		#ast = simplify(ast)
+		#print "\nSimplified:\n", ast
 
 		type, quots = compile(prog)
 		print "\nProg Type:\t", type
 		entry, prog = link(quots)
 		#for q in prog:
 		#	print q,'\n'
-		print "Running:"
+		print "Output:"
 		final = run(entry, prog)
 		print "\nFinal Stack:", final
 	except Exception as e:
 		print e.message
 	print '\n\n'
 
-#printparse(r"""(+ 2)""")
+printparse(r"""(+ 2)""")
 
 printparse(
 r"""
