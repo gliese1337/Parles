@@ -15,7 +15,9 @@ class AtomType():
 
 class StackType(namedtuple('StackType', ['row', 'top'])):
 	def __repr__(self):
-		return str(self.row) + ' '+' '.join(map(str,self.top))
+		if len(self.top):
+			return str(self.row) + ' ' + ' '.join(map(str,self.top))
+		return str(self.row)
 		
 class FuncType(namedtuple('FuncType', ['input', 'output'])):
 	def __repr__(self):

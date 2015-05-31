@@ -2,7 +2,7 @@ from collections import defaultdict, namedtuple
 from ParlesAST import *
 from ParlesTypes import *
 from ParlesStructs import Quotation, Instr
-	
+
 class VarRecord():
 	def __init__(self,level,type,captured,index=0):
 		self.level = level
@@ -10,27 +10,30 @@ class VarRecord():
 		self.type = type
 		self.captured = captured
 
+	def __repr__(self):
+		return str((self.level, self.index, self.type, self.captured))
+
 class SymTable():
 	def __init__(self,parent=None):
 		self.parent = parent
 		self.table = {}
-	
+
 	def __contains__(self,item):
 		return (item in self.table) or (item in self.parent if self.parent else False)
-	
+
 	def __getitem__(self,index):
 		if index in self.table:
 			return self.table[index]
 		if self.parent and (index in self.parent):
 			return self.parent[index]
 		return None
-		
+
 	def __setitem__(self,index,value):
 		if index in self.table:
 			raise Exception("Symbol Table Error")
 		self.table[index] = value
 		return value
-	
+
 	def extend(self,kv):
 		ntable = SymTable(self)
 		ntable.table.update(kv)
@@ -57,11 +60,11 @@ optable = {
 		],
 	'print': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('n',0), 'print', (-1,0), (-3,0))]
 }
-		
+
 def genword(val, level, symtable):
 	global optable
 	if val in symtable:
-		record = symtable[val] 
+		record = symtable[val]
 		mode = level - record.level if record.captured else -1
 		if isinstance(record.type, FuncType): #call function
 			return [Instr(('n',0), 'call', (mode,record.index), (-3,0))]
@@ -102,23 +105,25 @@ def lifeanalysis(nlist,locals):
 		lset -= eqset
 		eqlist.append(eqset)
 	return eqlist
-	
+
 def gensymtable(quot, level, symtable):
 	bound, _, body = quot
 	#variable capture analysis
 	locals, captured = capanalysis(quot)
-	
-	#local variable lifetime analysis and get sets of non-overlapping variables
+
+	#local variable lifetime analysis
+	#finds sets of non-overlapping variables
 	eqlist = lifeanalysis(body,locals)
-	
+
 	#Assign display variable indices
 	vtable = {a.val: VarRecord(level, a.type, True, index=i) for i,a in enumerate(captured)}
-	
+
 	#Assign local variable indices
 	types = {a.val: a.type for a in locals}
 	for i,eqset in enumerate(eqlist):
 		ni = i+2
 		for v in eqset: vtable[v] = VarRecord(level, types[v], False, index=ni)
+
 	return len(eqlist), len(captured), symtable.extend(vtable)
 
 qid = 0
@@ -129,19 +134,19 @@ def genqid():
 
 def genquot(node, level, symtable):
 	_, used, body = node
-	
+
 	#find the deepest higher scope level from which we are capturing variables
 	#our variables will occupy the next lowest level
 	highvars = {v for v in used if v in symtable}
 	accesslevel = max(symtable[v].level for v in highvars) if len(highvars) > 0 else 0
 	varlevel = accesslevel + 1
-	
+
 	#generate new symtable and get local allocation sizes
 	lsize, csize, nsymtable = gensymtable(node, varlevel, symtable)
 	#eliminate vacuous display levels
 	nlevel = accesslevel if csize == 0 else varlevel
 	skip = level-accesslevel
-	
+
 	id = genqid()
 	instrs, lowerqs = _codegen(body, nlevel+1, nsymtable)
 	lowerqs[id] = Quotation(id, lsize+2, csize, instrs, skip)
@@ -162,26 +167,26 @@ def gennode(node, level, symtable):
 		return [Instr((mode,record.index), 'pop', (-3,0), (-3,0))],{}
 	if isinstance(node, Func):
 		bound, used, body = node
-		
+
 		#check special cases- re-use known quotations
 		if len(bound) == 0:
 			if len(body) == 0:
 				#TODO: push the no-op function
 				pass
 			elif len(body) == 1:
-				#check is we need to unwrap and push a quoted function
+				#check if we need to unwrap and push a quoted function
 				bnode = body[0]
 				if isinstance(bnode, Word):
 					record = symtable[bnode.val]
 					if isinstance(record.type, FuncType):
 						mode = level - record.level if record.captured else -1
 						return [Instr(('s',0), 'mov', (mode,record.index), (-3,0))],{}
-		
+
 		#generate a new quotation
 		return genquot(node, level, symtable)
 	else:
 		print "node:", node
-		raise Exception("Unknown node type")
+		raise Exception("Unknown AST Node Type")
 
 def _codegen(nlist, level, symtable):
 	code, qtable = [], {}

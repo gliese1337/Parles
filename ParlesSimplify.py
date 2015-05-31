@@ -44,13 +44,22 @@ def _flatten(node):
 		rnodes, rvars, rused = _flatten(node.right)
 		return lnodes+rnodes, lvars+rvars, lused|rused
 	if isinstance(node, Quote):
-		body, vars, used = _flatten(node.body)
-		return [Func(node.args+vars,used,body)],[],used
+		prelude = map(lambda a: Pop(a.val,a.type), node.args)
+		if node.body is None:
+			used = set()
+			return [Func(node.args,used,prelude)],[],used
+		else:
+			body, vars, used = _flatten(node.body)
+			return [Func(node.args+vars,used,prelude+body)],[],used
 	if isinstance(node, Scope):
-		body, vars, used = _flatten(node.body)
-		fullbody = map(lambda a: Pop(a.val,a.type), node.args)+body
-		fullbound = node.args+vars
-		return fullbody,fullbound,used
+		prelude = map(lambda a: Pop(a.val,a.type), node.args)
+		if node.body is None:
+			return prelude,node.args,set()
+		else:
+			body, vars, used = _flatten(node.body)
+			fullbody = prelude+body
+			fullbound = node.args+vars
+			return fullbody,fullbound,used
 	return [node],[],set()
 
 def flatten(node):

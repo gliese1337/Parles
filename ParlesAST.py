@@ -11,17 +11,21 @@ class Scope():
 		yield self.args
 		yield self.body
 
+def rep_scope(args, body):
+	return (' '.join(map(str,args)) + " -> " if len(args) else "") \
+			+ (str(body) if body else "")
+
 class Quote(Scope):
 	def __repr__(self):
-		return "["+(' '.join(map(str,self.args))+" -> " if len(self.args) else "")+str(self.body)+"]"
+		return "["+rep_scope(self.args, self.body)+"]"
 
 class Paren(Scope):
 	def __repr__(self):
-		return "("+(' '.join(map(str,self.args))+" -> " if len(self.args) else "")+str(self.body)+")"
+		return "("+rep_scope(self.args, self.body)+")"
 		
 class Block(Scope):
 	def __repr__(self):
-		return "{"+(' '.join(map(str,self.args))+" -> " if len(self.args) else "")+str(self.body)+"}"
+		return "{"+rep_scope(self.args, self.body)+"}"
 
 class Word():
 	def __init__(self,val,type=None):
@@ -37,6 +41,8 @@ class Literal():
 		self.type = type
 		
 	def __repr__(self):
+		if self.type.val == 'str':
+			return '"'+str(self.val)+'"'
 		return str(self.val)
 
 class Sequence():

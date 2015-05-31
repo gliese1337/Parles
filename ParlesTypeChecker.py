@@ -25,7 +25,7 @@ class TypeEnv():
 def produce(t):
 	row = genvar()
 	return FuncType(StackType(row,[]),StackType(row, [t]))
-	
+
 def promote(t):
 	if isinstance(t, FuncType): return t
 	return produce(t)
@@ -64,7 +64,10 @@ def _typecheck(node, tenv):
 	if isinstance(node, Paren): return parentype(node, tenv)
 	if isinstance(node, Block): return blocktype(node, tenv)
 	if isinstance(node, Quote): return produce(blocktype(node, tenv))
-	raise Exception("Unknown AST Node")
+	if node is None:
+		row = genvar()
+		return FuncType(StackType(row,[]),StackType(row,[]))
+	raise Exception("Unknown AST Node: "+str(node))
 
 def typecheck(node, tenv):
 	reset()

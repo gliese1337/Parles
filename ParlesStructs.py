@@ -4,7 +4,7 @@ from collections import namedtuple
 class Quotation(namedtuple('Quotation', ['id', 'rsize', 'vsize', 'instrs', 'dskip'])):
 	def __repr__(self):
 		id, rsize, vsize, instrs, dskip = self
-		return id+'(%d, %d, %d):\n'%(rsize,vsize,dskip)+'\n'.join(map(lambda i: str(i), instrs))
+		return id+'(%d, %d, %d)'%(rsize,vsize,dskip)
 
 def argstr(arg):
 	spec, index = arg

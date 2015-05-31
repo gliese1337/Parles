@@ -7,10 +7,9 @@ from ParlesTypeChecker import typecheck, TypeEnv
 topenv = TypeEnv().extend(typetable)
 
 def compile(source):
-	ast = parse(source)
+	ast = simplify(parse(source))
 	type = typecheck(ast,topenv)
-	intermediate = flatten(simplify(ast))
-	quots = codegen(intermediate)
+	quots = codegen(flatten(ast))
 	return type, quots
 
 def link(quots):

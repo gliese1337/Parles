@@ -5,9 +5,8 @@ from ParlesTypes import *
 #Block, Quote, Pipe, Seq
 def checkword(wrd):
 	if wrd == '->': return ('ARG_ARROW',wrd)
-	if wrd[0] == '"': return ('STRING', wrd)
 	try:
-		return ('NUMBER', int(wrd))
+		return ('NUMBER',int(wrd))
 	except ValueError:
 		return ('WORD',wrd)
 
@@ -15,8 +14,16 @@ def tokenize(input):
 	stopchars = "[]{}()\\|:;"
 	whitespace = " \t\r\n"
 	wrd = ""
+	strmode = False
 	for c in input:
-		if c in stopchars:
+		if strmode:
+			if c == '"':
+				yield ('STRING',wrd)
+				strmode = False
+				wrd = ""
+			else:
+				wrd += c
+		elif c in stopchars:
 			if len(wrd):
 				yield checkword(wrd)
 				wrd = ""
@@ -34,8 +41,12 @@ def tokenize(input):
 			if len(wrd):
 				yield checkword(wrd)
 				wrd = ""
+		elif c == '"':
+			strmode = True
 		else:
 			wrd += c
+	if strmode:
+		raise Exception("Unclosed String")
 	if len(wrd):
 		yield checkword(wrd)
 
@@ -96,9 +107,10 @@ def parseStack(tokenizer):
 	rowvar = TypeVar(val)
 	typelist = []
 	type, val = safe_next(tokenizer)
-	while True: 
+	while True:
 		if type == 'WORD':
 			typelist.append(AtomType(val))
+			type, val = safe_next(tokenizer)
 		elif type == 'OPEN_PAREN':
 			ftype, (type, val) = parseFunc(tokenizer)
 			typelist.append(ftype)
@@ -112,12 +124,12 @@ def parseFunc(tokenizer):
 	t2, (type, val) = parseStack(tokenizer)
 	if type != 'CLOSE_PAREN':
 		raise Exception("Invalid type declaration")
-	return FuncType(t1, t2), (type, val)
+	return FuncType(t1, t2)
 
 def parseType(tokenizer):
 	type, val = safe_next(tokenizer)
 	if type == 'WORD':
-		return TypeName(val), safe_next(tokenizer)
+		return TypeName(val)
 	if type == 'OPEN_PAREN':
 		return parseFunc(tokenizer)
 	raise Exception("Invalid type declaration: "+val)
@@ -126,32 +138,22 @@ def parseLambda(prefline, tokenizer):
 	type, val = safe_next(tokenizer)
 	if type != 'WORD':
 		raise Exception("Missing lambda argument: "+val)
-	args = [Word(val)]
+	arg = Word(val)
 	
 	type, val = safe_next(tokenizer)
-	if type != 'TYPE':
-		raise Exception("Missing lambda argument type: "+val)
-	args[0].type, next = parseType(tokenizer)
+	if type == 'TYPE':
+		arg.type = parseType(tokenizer)
 	
-	rest, next = parseLine(tokenizer, next)
+	rest, next = parseLine(tokenizer)
 	if isinstance(rest, Seq):
 		if prefline: body = Seq(prefline,rest.right)
 		else: body = rest.right
-		lblock = Block(args,body)
+		lblock = Block([arg],body)
 		return Seq(rest.left, lblock), next
 	else:
-		lblock = Block(args,prefline)
+		lblock = Block([arg],prefline)
 		return Seq(rest, lblock), next
-	
-def lift_pipe(pipe):
-	left, right = pipe.left, pipe.right
-	if isinstance(right, Pipe):
-		right = lift_pipe(right)		
-	if isinstance(right, Seq):
-		return Seq(Pipe(left, right.left), right.right)
-	else:
-		return Pipe(left, right)
-		
+
 def nodeify(line):
 	if len(line) == 0:
 		return None
@@ -159,13 +161,13 @@ def nodeify(line):
 		return line[0]
 	return Seq(line[-1],nodeify(line[:-1]))
 
-def parseLine(tokenizer, next=None):
-	close_types = ['CLOSE_QUOTE', 'CLOSE_BLOCK', 'CLOSE_PAREN', 'EOF']
+def parseLine(tokenizer, next=None, stops=[]):
+	close_types=['CLOSE_QUOTE', 'CLOSE_BLOCK', 'CLOSE_PAREN', 'EOF']
 	line = []
 	if next is None: next = safe_next(tokenizer)
 	while True:
 		type, val = next
-		if type in close_types:
+		if (type in close_types) or (type in stops):
 			return nodeify(line), next
 		if type == 'ARG_ARROW':
 			return line, next
@@ -190,7 +192,8 @@ def parseLine(tokenizer, next=None):
 		elif type == 'TYPE':
 			if len(line) == 0:
 				raise Exception("Nothing to type")
-			line[-1].type, next = parseType(tokenizer)
+			line[-1].type = parseType(tokenizer)
+			next = safe_next(tokenizer)
 		elif type == 'LAMBDA':
 			node, next = parseLambda(nodeify(line), tokenizer)
 			line = [node]
@@ -201,8 +204,11 @@ def parseLine(tokenizer, next=None):
 			elif right is not None:
 				line = [Seq(nodeify(line),right)]
 		elif type == 'PIPE':
-			right, next = parseLine(tokenizer)
-			line = [lift_pipe(Pipe(nodeify(line),right))]
+			right, next = parseLine(tokenizer, stops = ['SEQ', 'PIPE'])
+			if len(line) == 0:
+				line = right
+			elif right is not None:
+				line = [Pipe(nodeify(line),right)]
 
 def parse(input):
 	tokenizer = tokenize(input)
