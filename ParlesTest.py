@@ -1,22 +1,20 @@
-from ParlesCompiler import parse, typecheck, simplify, compile, link
-from ParlesVM import run
+from ParlesCompiler import compile, serialize
+from ParlesVM import run, load
 
 def printparse(prog):
 	prog = prog.strip()
 	try:
 		print "Program:\n\n", prog
-		#ast = parse(prog)
-		#print "AST:\t\t", ast
-		#ast = simplify(ast)
-		#print "\nSimplified:\n", ast
 
-		type, quots = compile(prog)
+		type, prog, entry = compile(prog)
 		print "\nProg Type:\t", type
-		entry, prog = link(quots)
-		#for q in prog:
-		#	print q,'\n'
+
+		#test seriaizing and reloading
+		serial = serialize(prog, entry)
+		prog, entry = load(l for l in serial.split('\n'))
+
 		print "Output:"
-		final = run(entry, prog)
+		final = run(prog, entry)
 		print "\nFinal Stack:", final
 	except Exception as e:
 		print e.message

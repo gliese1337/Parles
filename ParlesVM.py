@@ -1,3 +1,5 @@
+from ParlesStructs import Instr, Quotation
+
 #Compiled program:
 #	list of quotation objects and entry point
 
@@ -19,7 +21,7 @@ def iter_stack(stack):
 		a, stack = stack
 		yield a
 
-def run(entry, qlist):
+def run(qlist, entry):
 	from ParlesStructs import *
 	from ParlesVMInstructions import optable
 	#set up the global environment
@@ -57,3 +59,46 @@ def run(entry, qlist):
 			pass
 
 	return list(iter_stack(state.stack))
+
+def parse_arg(arg):
+	if arg[0] == '#':
+		return (-2, int(arg[1:]))
+	if arg[0] == '"':
+		from base64 import b64decode
+		return (-2, b64decode(arg[1:]))
+	if arg[0] == 'r':
+		return (-1, int(arg[1:]))
+	return tuple(map(int, arg[1:].split(']')))
+
+def parse_instr(line):
+	fields = line.split(' ')
+	flen = len(fields)
+	sdest, _, op = fields[:3]
+	arg1, arg2 = (-3, 0), (-3, 0)
+
+	if sdest in ['s', 'n']:
+		dest = (sdest, 0)
+	else:
+		dest = (sdest[0], int(sdest[1:]))
+
+	if flen > 3:
+		arg1 = parse_arg(fields[3])
+		if flen > 4:
+			arg2 = parse_arg(fields[4])
+
+	return Instr(dest, op, arg1, arg2)
+
+def load(lines):
+	entry = int(lines.next())
+	quots, instrs = [], None
+	for line in lines:
+		if line[0] == 'q':
+			if instrs is not None:
+				quots.append(Quotation("", rsize, vsize, instrs, dskip))
+			rsize, vsize, dskip = map(int, line.split(' ')[1:])
+			instrs = []
+		else:
+			instrs.append(parse_instr(line))
+	if instrs is not None:
+		quots.append(Quotation("", rsize, vsize, instrs, dskip))
+	return quots, entry

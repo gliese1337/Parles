@@ -10,7 +10,8 @@ def compile(source):
 	ast = simplify(parse(source))
 	type = typecheck(ast,topenv)
 	quots = codegen(flatten(ast))
-	return type, quots
+	prog, entry = link(quots)
+	return type, prog, entry
 
 def link(quots):
 	from ParlesStructs import Quotation, Instr
@@ -24,4 +25,7 @@ def link(quots):
 	def rewriteq(q):
 		id, rsize, vsize, instrs, ds = q
 		return Quotation(id, rsize, vsize, map(rewritei, instrs), ds)
-	return imap['main'], map(rewriteq, qlist)
+	return map(rewriteq, qlist), imap['main']
+
+def serialize(prog, entry):
+	return str(entry)+'\n'+'\n'.join(map(lambda q: q.serialize(), prog))

@@ -5,13 +5,24 @@ class Quotation(namedtuple('Quotation', ['id', 'rsize', 'vsize', 'instrs', 'dski
 	def __repr__(self):
 		id, rsize, vsize, instrs, dskip = self
 		return id+'(%d, %d, %d)'%(rsize,vsize,dskip)
+	
+	def serialize(self):
+		_, rsize, vsize, instrs, dskip = self
+		header = 'q %d %d %d\n'%(rsize,vsize,dskip)
+		return header+'\n'.join(map(str, instrs))
+
+def rep_literal(v):
+	from base64 import b64encode
+	if isinstance(v, str):
+		return '"'+b64encode(v)
+	return "#"+str(v)
 
 def argstr(arg):
 	spec, index = arg
 	if spec == -3:
 		return ""
 	if spec == -2:
-		return '#'+str(index)
+		return rep_literal(index)
 	if spec == -1:
 		return 'r'+str(index)
 	return "["+str(spec)+"]"+str(index)
