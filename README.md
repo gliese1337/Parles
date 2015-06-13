@@ -41,6 +41,15 @@ evaluates to `21`. What is actually going on is that the typechecker verifies th
 
     (* (+ 4 3) (+ 2 1))
 
+Uniform Call Syntax
+=====
+
+Parles has one more bit of more specialized sequencing sugar: the `.`, or method call, operator, which is used to simulate the dot-syntax method calls of OO languages like C++ or Java. Inspired by the D language's Uniform Function Call Syntax, it simply re-writes expressions of the form `bar.foo baz` to `foo bar baz`. Like the pipe, the `.` operator can also be used to simulate infix operations.
+
+Also like the `|` operator, the `.` operator imposes some type restrictions: the receiver (whatever comes before the dot- the thing that you're calling a method on) must take no arguments and produce exactly one output, while the method call must take at last one argument (the receiver, self, or 'this' argument). Unlike the other sequencing operators, though, `.` comes with syntactic restrictions: it cannot occur at the beginning or end of a scope (i.e., there must be a receiver expression before it and a method to call after it, not a block or file boundary), and the method must be a single word, not a block, string, or any other expression. Violating those restrictions is a parse error.
+
+The receiver, however, can be any arbitrary expression of the correct type, thus allowing for method chaining (i.e., `foo.bar(baz).qux(fred)`). The receiver is taken to be everything to the left of the `.` operator up to the last `;`, `|`, or opening block boundary. The re-writing action of the `.` operator can thus be simply described as moving a single word to its right leftwards to the last other sequencing operator or opening block boundary.
+
 Non-Argument Variables
 =====
 

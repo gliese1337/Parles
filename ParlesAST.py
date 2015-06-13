@@ -64,5 +64,9 @@ class Seq(Sequence):
 	def __repr__(self):
 		return str(self.right)+" "+str(self.left)
 
+class Method(Sequence):
+	def __repr__(self):
+		return "{"+str(self.left)+" ."+str(self.right)+"}"
+
 Pop = namedtuple('Pop',['val','type'])
 Func = namedtuple('Func',['vars','used','body'])

@@ -23,6 +23,7 @@ def merge(node):
 		if left == nleft and right == nright: return node
 		if isinstance(node, Seq): return Seq(nleft, nright)
 		if isinstance(node, Pipe): return Pipe(nleft, nright)
+		if isinstance(node, Method): return Method(nleft, nright)
 	if isinstance(node, Scope):
 		args, body = node
 		nnode, nargs = _merge(body)

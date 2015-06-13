@@ -42,6 +42,7 @@ def _alphavary(node, vtable):
 		right = _alphavary(node.right, vtable)
 		if isinstance(node, Seq): return Seq(left, right)
 		if isinstance(node, Pipe): return Pipe(left, right)
+		if isinstance(node, Method): return Method(left, right)
 	if isinstance(node, Scope):
 		if len(node.args) > 0:
 			nvtable = VarTable(vtable)

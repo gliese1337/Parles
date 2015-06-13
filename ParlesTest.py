@@ -72,6 +72,7 @@ printparse(r"""8 3 | /% ; 12 6 | /%""")
 printparse(r"""8 3 ; /% ; 12 6 ; /%""")
 
 printparse(r"""print "hello there" """)
+printparse(r""" "hello there".print """)
 
 printparse(r"""\average : (A num num -> A num) [x : num y : num -> / + x y 2]""")
 

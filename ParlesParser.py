@@ -11,7 +11,7 @@ def checkword(wrd):
 		return ('WORD',wrd)
 
 def tokenize(input):
-	stopchars = "[]{}()\\|:;"
+	stopchars = "[]{}()\\|:;."
 	whitespace = " \t\r\n"
 	wrd = ""
 	strmode = False
@@ -35,6 +35,7 @@ def tokenize(input):
 			elif c == '}': yield ('CLOSE_BLOCK',c)
 			elif c == ';': yield ('SEQ',c)
 			elif c == '|': yield ('PIPE',c)
+			elif c == '.': yield ('METHOD',c)
 			elif c == '\\': yield ('LAMBDA',c)
 			elif c == ':': yield ('TYPE',c)
 		elif c in whitespace:
@@ -53,7 +54,6 @@ def tokenize(input):
 def safe_next(t):
 	try:
 		token = t.next()
-		#print token
 	except StopIteration:
 		token = ("EOF","EOF")
 	return token
@@ -209,6 +209,15 @@ def parseLine(tokenizer, next=None, stops=[]):
 				line = right
 			elif right is not None:
 				line = [Pipe(nodeify(line),right)]
+		elif type == 'METHOD':
+			if len(line) == 0:
+				raise Exception("Missing method receiver")
+			m_token = safe_next(tokenizer)
+			type, val = m_token
+			if type != "WORD":
+				raise Exception("Missing method name")
+			line = [Method(nodeify(line),Word(val))]
+			next = safe_next(tokenizer)
 
 def parse(input):
 	tokenizer = tokenize(input)

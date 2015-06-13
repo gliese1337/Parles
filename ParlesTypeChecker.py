@@ -42,6 +42,19 @@ def pipetype(node, tenv):
 		raise Exception("Pipe mismatch")
 	return compose(ltype, rtype)
 
+def methodtype(node, tenv):
+	ltype = promote(typecheck(node.left, tenv))
+	if len(ltype.input.top) > 0:
+		raise Exception("Receiver expression cannot require arguments")
+	if len(ltype.output.top) != 1:
+		raise Exception("Receiver expression must produce a single output")
+
+	rtype = promote(typecheck(node.right, tenv))
+	if len(rtype.input.top) == 0:
+		raise Exception("Method calls must take at least argument (the receiver)")
+
+	return compose(ltype, rtype)
+
 def blocktype(node, tenv):
 	nenv = tenv.extend({a.val: a.type for a in node.args})
 	(inrow, intop), output = typecheck(node.body, nenv)
@@ -61,6 +74,7 @@ def _typecheck(node, tenv):
 	if isinstance(node, Word): return tenv[node.val]
 	if isinstance(node, Seq): return seqtype(node, tenv)
 	if isinstance(node, Pipe): return pipetype(node, tenv)
+	if isinstance(node, Method): return methodtype(node, tenv)
 	if isinstance(node, Paren): return parentype(node, tenv)
 	if isinstance(node, Block): return blocktype(node, tenv)
 	if isinstance(node, Quote): return produce(blocktype(node, tenv))
@@ -72,5 +86,4 @@ def _typecheck(node, tenv):
 def typecheck(node, tenv):
 	reset()
 	type = _typecheck(node, tenv)
-	#print node, "\n\t", type, '\n'
 	return type
