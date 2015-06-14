@@ -29,3 +29,11 @@ def link(quots):
 
 def serialize(prog, entry):
 	return str(entry)+'\n'+'\n'.join(map(lambda q: q.serialize(), prog))
+
+if __name__ == "__main__":
+	import sys
+	try:
+		type, prog, entry = compile(sys.stdin)
+		print serialize(prog, entry)
+	except Exception as e:
+		sys.stderr.write("Error: %s\n"%(e.message,))

@@ -1,0 +1,4 @@
+{x: num y: num -> / {x ;+ y} 2} 6 10;
+{x: num y: num -> / {x |+ y} 2} 6 10;
+8 3 | /% ; 12 6 | /%;
+"hi" | print; "bye" | print;

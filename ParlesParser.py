@@ -2,7 +2,6 @@ from collections import defaultdict
 from ParlesAST import *
 from ParlesTypes import *
 
-#Block, Quote, Pipe, Seq
 def checkword(wrd):
 	if wrd == '->': return ('ARG_ARROW',wrd)
 	try:
@@ -10,12 +9,12 @@ def checkword(wrd):
 	except ValueError:
 		return ('WORD',wrd)
 
-def tokenize(input):
+def tokenize(chars):
 	stopchars = "[]{}()\\|:;."
 	whitespace = " \t\r\n"
 	wrd = ""
 	strmode = False
-	for c in input:
+	for c in chars:
 		if strmode:
 			if c == '"':
 				yield ('STRING',wrd)
@@ -219,7 +218,15 @@ def parseLine(tokenizer, next=None, stops=[]):
 			line = [Method(nodeify(line),Word(val))]
 			next = safe_next(tokenizer)
 
+
+def charIterable(input):
+	if isinstance(input, (str, unicode)):
+		for c in line: yield c
+	else:
+		for line in input:
+			for c in line: yield c
+
 def parse(input):
-	tokenizer = tokenize(input)
+	tokenizer = tokenize(charIterable(input))
 	seq, next = parseLine(tokenizer)
 	return seq

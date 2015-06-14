@@ -1,0 +1,5 @@
+\a : num + 1 2 "hi" 4;
+{ b : str -> print b};
+if < 1 a
+	[print "true"]
+	[print "false"]

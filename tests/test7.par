@@ -1,0 +1,2 @@
+\average : (A num num -> A num) [x : num y : num -> / + x y 2];
+average 6 10

@@ -1,0 +1,9 @@
++ 1 2;
+"hi";
+/% 7 3 | +;
+{ a : num ->
+	if < 1 2
+		[print "true"]
+		[print "false"]
+	{ a : str -> print a }
+}

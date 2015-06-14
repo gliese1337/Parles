@@ -1,4 +1,4 @@
-from ParlesStructs import Instr, Quotation
+from ParlesStructs import *
 
 #Compiled program:
 #	list of quotation objects and entry point
@@ -22,7 +22,6 @@ def iter_stack(stack):
 		yield a
 
 def run(qlist, entry):
-	from ParlesStructs import *
 	from ParlesVMInstructions import optable
 	#set up the global environment
 	genv = Env(Quotation('global',0,0,[],0),None)
@@ -91,7 +90,7 @@ def parse_instr(line):
 def load(lines):
 	entry = int(lines.next())
 	quots, instrs = [], None
-	for line in lines:
+	for line in map(lambda l: l.strip(), lines):
 		if line[0] == 'q':
 			if instrs is not None:
 				quots.append(Quotation("", rsize, vsize, instrs, dskip))
@@ -102,3 +101,12 @@ def load(lines):
 	if instrs is not None:
 		quots.append(Quotation("", rsize, vsize, instrs, dskip))
 	return quots, entry
+
+
+if __name__ == "__main__":
+	import sys
+	try:
+		final = run(*load(sys.stdin))
+		print "Final Stack:", final
+	except StopIteration:
+		print "VM: No Program"
