@@ -83,7 +83,7 @@ def capanalysis(fn):
 	captured = [a for a in bound if a.val in cused]
 	return locals, captured
 
-def lifeanalysis(nlist,locals):
+def lifeanalysis(nlist,locals): #currently broken
 	lset = {a.val for a in locals}
 	#calculate usage ranges
 	max = len(nlist)
@@ -113,7 +113,8 @@ def gensymtable(quot, level, symtable):
 
 	#local variable lifetime analysis
 	#finds sets of non-overlapping variables
-	eqlist = lifeanalysis(body,locals)
+	#eqlist = lifeanalysis(body,locals)
+	eqlist = [set([a.val]) for a in locals]
 
 	#Assign display variable indices
 	vtable = {a.val: VarRecord(level, a.type, True, index=i) for i,a in enumerate(captured)}

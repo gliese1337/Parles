@@ -41,8 +41,6 @@ def run(qlist, entry):
 		v1 = getv(a1, state.frame)
 		v2 = getv(a2, state.frame)
 
-		#print '\t', state.instr, '\n\t\t\t', (v1, v2)
-
 		#execute
 		state.ip += 1
 		state, output = optable[op](state, v1, v2)
@@ -56,6 +54,9 @@ def run(qlist, entry):
 			state.frame.env.vars[n] = output
 		elif dtype == 'n':
 			pass
+
+		#print '\t', state.instr, '\t', state.frame.rfile
+		#print list(iter_stack(state.stack))
 
 	return list(iter_stack(state.stack))
 
