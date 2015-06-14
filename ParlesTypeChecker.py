@@ -75,15 +75,19 @@ def _typecheck(node, tenv):
 	if isinstance(node, Seq): return seqtype(node, tenv)
 	if isinstance(node, Pipe): return pipetype(node, tenv)
 	if isinstance(node, Method): return methodtype(node, tenv)
-	if isinstance(node, Paren): return parentype(node, tenv)
-	if isinstance(node, Block): return blocktype(node, tenv)
-	if isinstance(node, Quote): return produce(blocktype(node, tenv))
+	if isinstance(node, Scope):
+		for a in node.args:
+			if a.type is None:
+				a.type = genvar()
+		if isinstance(node, Paren): return parentype(node, tenv)
+		if isinstance(node, Block): return blocktype(node, tenv)
+		if isinstance(node, Quote): return produce(blocktype(node, tenv))
 	if node is None:
 		row = genvar()
 		return FuncType(StackType(row,[]),StackType(row,[]))
 	raise Exception("Unknown AST Node: "+str(node))
 
 def typecheck(node, tenv):
-	reset()
+	reset() #resets the typevar counter
 	type = _typecheck(node, tenv)
 	return type

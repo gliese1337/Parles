@@ -52,12 +52,11 @@ def tokenize(chars):
 
 def safe_next(t):
 	try:
-		token = t.next()
+		return t.next()
 	except StopIteration:
-		token = ("EOF","EOF")
-	return token
+		return ("EOF","EOF")
 
-def args_body(tokenizer,checktype):
+def args_body(tokenizer):
 	body, (type, val) = parseLine(tokenizer)
 	if type == 'ARG_ARROW':
 		args = body
@@ -67,29 +66,25 @@ def args_body(tokenizer,checktype):
 		body, (type, val) = parseLine(tokenizer)
 	else:
 		args = []
-	checktype(type)
-	return args, body
+	return args, body, type
 
 def parseQuote(tokenizer):
-	def checktype(type):
-		if type != 'CLOSE_QUOTE':
-			raise Exception("Missing closing bracket: '"+val+"'")
-	args, body = args_body(tokenizer,checktype)
-	return Quote(args,body), safe_next(tokenizer)
+	args, body, type = args_body(tokenizer)
+	if type != 'CLOSE_QUOTE':
+		raise Exception("Expected ']', saw '"+val+"'")
+	return Quote(args,body)
 
 def parseParen(tokenizer):
-	def checktype(type):
-		if type != 'CLOSE_PAREN':
-			raise Exception("Missing closing paren: '"+val+"'")
-	args, body = args_body(tokenizer,checktype)
-	return Paren(args,body), safe_next(tokenizer)
+	args, body, type = args_body(tokenizer)
+	if type != 'CLOSE_PAREN':
+		raise Exception("Expected ')', saw '"+val+"'")
+	return Paren(args,body)
 
 def parseBlock(tokenizer):
-	def checktype(type):
-		if type != 'CLOSE_BLOCK':
-			raise Exception("Missing closing brace: '"+val+"'")
-	args, body = args_body(tokenizer,checktype)
-	return Block(args,body), safe_next(tokenizer)
+	args, body, type = args_body(tokenizer)
+	if type != 'CLOSE_BLOCK':
+		raise Exception("Expected '}', saw '"+val+"'")
+	return Block(args,body)
 
 def makeStack(l):
 	if l[0].type is not None:
@@ -132,18 +127,20 @@ def parseType(tokenizer):
 	if type == 'OPEN_PAREN':
 		return parseFunc(tokenizer)
 	raise Exception("Invalid type declaration: "+val)
-	
+
 def parseLambda(prefline, tokenizer):
 	type, val = safe_next(tokenizer)
 	if type != 'WORD':
 		raise Exception("Missing lambda argument: "+val)
 	arg = Word(val)
-	
-	type, val = safe_next(tokenizer)
+
+	next = safe_next(tokenizer)
+	type, val = next
 	if type == 'TYPE':
 		arg.type = parseType(tokenizer)
-	
-	rest, next = parseLine(tokenizer)
+		next = None
+
+	rest, next = parseLine(tokenizer, next)
 	if isinstance(rest, Seq):
 		if prefline: body = Seq(prefline,rest.right)
 		else: body = rest.right
@@ -170,53 +167,49 @@ def parseLine(tokenizer, next=None, stops=[]):
 			return nodeify(line), next
 		if type == 'ARG_ARROW':
 			return line, next
+
 		if type == 'WORD':
 			line.append(Word(val))
-			next = safe_next(tokenizer)
-		if type == 'NUMBER':
+		elif type == 'NUMBER':
 			line.append(Literal(val,AtomType('num')))
-			next = safe_next(tokenizer)
-		if type == 'STRING':
+		elif type == 'STRING':
 			line.append(Literal(val,AtomType('str')))
-			next = safe_next(tokenizer)
 		elif type == 'OPEN_QUOTE':
-			block, next = parseQuote(tokenizer)
-			line.append(block)
+			line.append(parseQuote(tokenizer))
 		elif type == 'OPEN_PAREN':
-			block, next = parseParen(tokenizer)
-			line.append(block)
+			line.append(parseParen(tokenizer))
 		elif type == 'OPEN_BLOCK':
-			block, next = parseBlock(tokenizer)
-			line.append(block)
+			line.append(parseBlock(tokenizer))
 		elif type == 'TYPE':
 			if len(line) == 0:
 				raise Exception("Nothing to type")
 			line[-1].type = parseType(tokenizer)
-			next = safe_next(tokenizer)
 		elif type == 'LAMBDA':
 			node, next = parseLambda(nodeify(line), tokenizer)
 			line = [node]
+			continue
 		elif type == 'SEQ':
 			right, next = parseLine(tokenizer)
 			if len(line) == 0:
 				line = right
 			elif right is not None:
 				line = [Seq(nodeify(line),right)]
+			continue
 		elif type == 'PIPE':
 			right, next = parseLine(tokenizer, stops = ['SEQ', 'PIPE'])
 			if len(line) == 0:
 				line = right
 			elif right is not None:
 				line = [Pipe(nodeify(line),right)]
+			continue
 		elif type == 'METHOD':
 			if len(line) == 0:
 				raise Exception("Missing method receiver")
-			m_token = safe_next(tokenizer)
-			type, val = m_token
+			type, val = safe_next(tokenizer)
 			if type != "WORD":
 				raise Exception("Missing method name")
 			line = [Method(nodeify(line),Word(val))]
-			next = safe_next(tokenizer)
+		next = safe_next(tokenizer)
 
 
 def charIterable(input):
