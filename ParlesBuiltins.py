@@ -12,7 +12,10 @@ optable = {
 	'<': pop2+[Instr(('s',0), 'lt', (-1,0), (-1,1))],
 	'>': pop2+[Instr(('s',0), 'gt', (-1,0), (-1,1))],
 	'=': pop2+[Instr(('s',0), 'eq', (-1,0), (-1,1))],
-	'not': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('s',0), 'not', (-1,0), (-3,0))],
+	'not': [
+		Instr(('r',0), 'pop', (-3,0), (-3,0)),
+		Instr(('s',0), 'not', (-1,0), (-3,0))
+	],
 	'if': [
 		Instr(('r',0), 'pop', (-3,0), (-3,0)),	#retrieve the boolean
 		Instr(('r',1), 'pop', (-3,0), (-3,0)),	#retrieve the "if" closure
@@ -35,7 +38,10 @@ optable = {
 		Instr(('s',0), 'mov', (-1,0), (-3,0))
 	],
 	'drop': [Instr(('n',0), 'pop', (-3,0), (-3,0))],
-	'print': [Instr(('r',0), 'pop', (-3,0), (-3,0)),Instr(('n',0), 'print', (-1,0), (-3,0))]
+	'print': [
+		Instr(('r',0), 'pop', (-3,0), (-3,0)),
+		Instr(('n',0), 'print', (-1,0), (-3,0))
+	]
 }
 
 typetable = {
