@@ -142,7 +142,6 @@ def subvar(Z, sym, val):
 		r = lambda z: subvar(z, sym, val)
 		if isinstance(sym, StackType)\
 			and Z.row == sym.row:
-			#not sure if the append order is correct here
 			return StackType(val.row, map(r, val.top+Z.top))
 		return StackType(Z.row, map(r, Z.top))
 	return Z

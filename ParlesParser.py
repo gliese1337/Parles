@@ -60,9 +60,6 @@ def args_body(tokenizer):
 	body, (type, val) = parseLine(tokenizer)
 	if type == 'ARG_ARROW':
 		args = body
-		for a in args:
-			if a.type is None:
-				raise Exception("Missing argument type for "+str(a))
 		body, (type, val) = parseLine(tokenizer)
 	else:
 		args = []
