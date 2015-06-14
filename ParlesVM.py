@@ -32,7 +32,7 @@ def run(qlist, entry):
 	while state.frame is not None:
 		#implicit return
 		if state.ended:
-			state.ip = state.frame.r_ip + 1
+			state.ip = state.frame.r_ip
 			state.frame = state.frame.r_rec
 			continue
 
@@ -44,8 +44,8 @@ def run(qlist, entry):
 		#print '\t', state.instr, '\n\t\t\t', (v1, v2)
 
 		#execute
-		state, output = optable[op](state, v1, v2)
 		state.ip += 1
+		state, output = optable[op](state, v1, v2)
 
 		#store
 		if dtype == 's':
