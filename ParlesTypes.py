@@ -1,39 +1,39 @@
 from collections import namedtuple
 
 class TypeVar(str):
-	pass
+  pass
 
 class AtomType():
-	def __init__(self, val):
-		self.val = val
+  def __init__(self, val):
+    self.val = val
 
-	def __repr__(self):
-		return self.val
-	
-	def __eq__(self,other):
-		return isinstance(other, AtomType) and self.val == other.val
+  def __repr__(self):
+    return self.val
+  
+  def __eq__(self,other):
+    return isinstance(other, AtomType) and self.val == other.val
 
 class StackType(namedtuple('StackType', ['row', 'top'])):
-	def __repr__(self):
-		if len(self.top):
-			return str(self.row) + ' ' + ' '.join(map(str,self.top))
-		return str(self.row)
-		
+  def __repr__(self):
+    if len(self.top):
+      return str(self.row) + ' ' + ' '.join(map(str,self.top))
+    return str(self.row)
+    
 class FuncType(namedtuple('FuncType', ['input', 'output'])):
-	def __repr__(self):
-		return '('+str(self.input)+' -> '+str(self.output)+')'
+  def __repr__(self):
+    return '('+str(self.input)+' -> '+str(self.output)+')'
 
 vcount = 0
 def genvar():
-	global vcount
-	vcount += 1
-	return TypeVar("#%d"%(vcount,))
+  global vcount
+  vcount += 1
+  return TypeVar("#%d"%(vcount,))
 
 def reset():
-	global vcount
-	vcount = 0
+  global vcount
+  vcount = 0
 
 def TypeName(val):
-	if val == "any":
-		return genvar()
-	return AtomType(val)
+  if val == "any":
+    return genvar()
+  return AtomType(val)
